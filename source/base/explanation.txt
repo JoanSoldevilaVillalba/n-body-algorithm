@@ -1,0 +1,37 @@
+
+Explicació general de l'algorisme N-bodies
+
+L’algorisme tracta sobre com els objectes interactuen entre ells i com es mouen dins de l’espai definit mesura que va passant el temps.
+És veu que la funció principal on es realitzen els càlculs o on se invoquen les funcions per realitzar els càlculs és la funció integrate,
+indicant-nos que possiblement és on es troba el bottleneck del programa. 
+També es pot veure que la funció integrate és invocada a través de un for loop “iteracions” vegades.
+
+La funció integrate té una complexitat algorísmica de NxN (nested for loop), marcada pel for loop utilitzat per calcular la força acumulada 
+sobre cada objecte per l’instant actual.
+Dins del codi més intern del bucle descrit, veiem que es es realitzen dues coses:
+	- cridar la funció bodyBodyInteraction: utiltzada per calcular la força entre la resta d'objectes amb el objecte/cos current.
+	- després de la invocació i execució de la funció descrita, s'acumnula la força de l'objecte current en tres acumuladors separats (l'algorisme
+	  es fa sobre espai 3D). En total 3 sumes per acumular els resultats obtinguts de la funció bodyBodyInteraction.
+
+Dins del cos de la funció bodyBodyInteraction es veu que hi ha bastanta intensitat aritmètica.
+És fan les operacions següents:
+	- 3 restes de punt flotant
+	- 6 multiplicacions de punt flotant
+	- 2 sumes de punt flotant
+	- Dins de la branca de condició: 1 divisió de punt flotant
+Un total de 12 operacoins de punt flotant més la funció powf de la llibreria math de c. Aquesta funció invocada per elevar un número a 1.5 (3/2), 
+segons el setup del servidor remot, gemini estima que la funció pot tardar 15-25 cicles.
+
+El conjunt d'operacions descrites més la funció "powf" realitzen el càlcul de la fòmula següent (càlcul de força gravitacional entre dues forces):
+
+-- aquí inserir imatge
+
+Després de l'execució de la funció bodyBodyInteraction, com ja comentat, tenim les tres sumes sobre les tres variables acumuladores, un total de 15 opera-
+cions de punt flotant (més la funció "pow"). Segons gemini i altres fonts, sobretot per numeros amb representació de punt flotant, la funció "powf" de 
+la llibreria de math de c pot ser costos. Es podria donar el cas que al haver-hi tanta intensitat aritèmtica que l'algorisme és veu limitat per la capa-
+citat que còmput que té un nucli: compute/throughput-bound.
+Dins del bloc de codi, només ens trobem amb tres camins recurrents: els tres sumes sobre els acumuladors i el resultat de bodyBodyInteraction. Cal tenir
+en compte que aquestes tres instruccions formen tres camins recurrents independents, perfectament paral·lelitzables. La latència de les microoperacions
+de suma sobre números de punt flotant no tenen una gran latència, aproxiamadament de 3 cicles per suma de punt flotant dins del setup (segons gemini).
+
+Passem a fer un petit anàlasi de memòria i si es pot presentar com a bottleneck dins del nostre programa.
