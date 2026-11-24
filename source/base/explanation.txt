@@ -1,4 +1,3 @@
-
 Explicació general de l'algorisme N-bodies
 
 L’algorisme tracta sobre com els objectes interactuen entre ells i com es mouen dins de l’espai definit mesura que va passant el temps.
@@ -6,7 +5,7 @@ L’algorisme tracta sobre com els objectes interactuen entre ells i com es moue
 indicant-nos que possiblement és on es troba el bottleneck del programa. 
 També es pot veure que la funció integrate és invocada a través de un for loop “iteracions” vegades.
 
-La funció integrate té una complexitat algorísmica de NxN (nested for loop), marcada pel for loop utilitzat per calcular la força acumulada 
+/*La funció integrate té una complexitat algorísmica de NxN (nested for loop), marcada pel for loop utilitzat per calcular la força acumulada 
 sobre cada objecte per l’instant actual.
 Dins del codi més intern del bucle descrit, veiem que es es realitzen dues coses:
 	- cridar la funció bodyBodyInteraction: utiltzada per calcular la força entre la resta d'objectes amb el objecte/cos current.
@@ -35,3 +34,19 @@ en compte que aquestes tres instruccions formen tres camins recurrents independe
 de suma sobre números de punt flotant no tenen una gran latència, aproxiamadament de 3 cicles per suma de punt flotant dins del setup (segons gemini).
 
 Passem a fer un petit anàlasi de memòria i si es pot presentar com a bottleneck dins del nostre programa.
+*/
+
+Dins del bucle més intern de integrate (complexitat O(N*N)), per a cada parell i != j es crida bodyBodyInteraction(in[i], in[j]) per calcular la contribució 
+de força entre dos cossos i s'acumula en tres variables separades (fx, fy, fz), una per cada component en 3D.
+
+Dins de bodyBodyInteraction es fan 3 restes, 2 sumes, 6 multiplicacions i 1 divisió en punt flotant (12 operacions aritmètiques), a més d'una crida a powf(..., 1.5). 
+Tot seguit, dins del bucle d'integrate, s'acumulen les tres components ff.x, ff.y i ff.z sobre fx, fy i fz (3 sumes més). 
+En total, cada iteració interna amb i != j executa 15 operacions aritmètiques en punt flotant i una crida a powf.
+
+En el nostre entorn (i segons l'estimació per al servidor remot), powf té un cost molt superior al d'una operació aritmètica simple, mentre que una suma de punt flotant 
+té una latència d'uns 3 cicles en maquinari. A més, les tres acumulacions fx, fy i fz formen tres camins de dependència independents.
+
+Per l'alta densitat d'operacions aritmètiques repetides N*N vegades per pas temporal, aquest bloc tendeix a ser compute / throughput-bound, sempre que l'accés 
+a memòria no es converteixi en el coll d'ampolla dominant.
+
+
