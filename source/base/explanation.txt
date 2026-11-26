@@ -35,3 +35,13 @@ marcat pel número de registres LFB (peticions de memòria).
 
 Proves empíriques per determinar si el programa és compute/throughoutput-bound:
 
+-inserir taula i després inserir alguna imatge sobe el cas base
+
+Per a diferents mides del problema, observem que l'IPC (Instructions Per Cycle) es manté pràcticament constant, variant únicament entre 4,1 i 4,2. Aquest comportament indica que existeix una proporció lineal entre els cicles d'execució i el nombre total d'instruccions, demostrant que el processador les executa a un ritme estable.
+Si el programa patís un coll d'ampolla (bottleneck) a la memòria, ja fos per latència o per amplada de banda, l'IPC cauria en picat, ja que el nucli del processador hauria de consumir molts cicles d'espera sense realitzar feina útil (stalls). 
+S'observa que la memòria no actua com a factor limitant perquè el conjunt de dades (memory footprint) de les mides analitzades cap dins dels nivells de memòria cau L1 i L2. Si el problema creixés fins a superar la capacitat de la memòria cau i hagués d'accedir sovint a la memòria principal (RAM), sí que apareixerien penalitzacions per latència.
+Pel que fa a l'anàlisi temporal, cal tenir en compte que a la taula de resultats el nombre d'instants de temps (iteracions de la simulació) s'ha fixat com una constant (T = 10). Tot i que la complexitat global de la simulació seria T*N*N, en mantenir T constant aïllem i observem directament la complexitat quadràtica N^2 de la funció d'integració (integrate). Aquest comportament es valida empíricament en comparar el cas de N = 8000 amb el cas base de N = 4000: En duplicar la mida del problema (N augmenta per un factor de 2), el temps d'execució teòric hauria d'incrementar-se per un factor de 2^2 = 4. Partint del temps base d'1,1 s, l'estimació teòrica és de 4 * 1,1 s = 4,4s. El temps real mesurat és de 4,35 s, la qual cosa representa una desviació mínima de només 0,05 s. Aquesta correspondència entre el temps real i el creixement quadràtic confirma que l'execució segueix estrictament la complexitat algorísmica i demostra que, per a aquestes dimensions, l'aplicació és clarament compute-bound (limitada per la capacitat de còmput).
+
+Altres bottlnecks possibles
+
+Hem comentat que si n creix prou  i el footprint de memoria del progama supera el L3 de  la memòria caché passariem a estar limitats per la latència de la memòria RAM, es  adir, l'execució del programa no seguiria la complexitat algorísmica de la funció integrate (N*N).
