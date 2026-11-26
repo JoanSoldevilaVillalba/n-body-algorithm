@@ -53,7 +53,8 @@ Pel que fa a l'anàlisi temporal, cal tenir en compte que a la taula de resultat
 
 # Altres bottlnecks possibles
 
-Hem comentat que si n creix prou  i el footprint de memoria del progama supera el L3 de  la memòria caché passariem a estar limitats per la latència de la memòria RAM, es  adir, l'execució del programa no seguiria la complexitat algorísmica de la funció integrate (N\*N).
+Hem comentat que si n creix prou  i el footprint de memoria del progama supera el L3 de  la memòria caché passariem a estar limitats per la latència de la memòria RAM, es  adir, 
+l'execució del programa no seguiria la complexitat algorísmica de la funció integrate (N\*N).
 
 # Esbrinar possibles millores/confirmació del bottlneck
 
@@ -64,3 +65,26 @@ La imatge confirma que el bottlneck es troba dins de la funció integrate i tamb
 També es veu que el compilador ha aplicat inlining en alguns llocs del codi, per exemple sobre la funció BodybodyInteraction, mentres que funcions amb més codi com pow , el compilador no ha pogut aplicar inlining.
 
 Es veu dins del perf report les funcions internes de la llibreria de math, invocades per la propia funció pow, que en total consumeixen aproximadament un 64.69 % (inclós el 3.59% de pow), confirmant que el bottlneck es troba dins de les crides de funcions trobades dins de la llibreria math.
+
+
+# Anàlasi del codi assembly
+
+La compilació del programa s'ha fet amb un nivell d'optmització de -O3, permeten llavors inlining, vectorització ... i altres tènciques que té a l'abast el compilador per optimitzar el codi.
+
+Algunes optimitzacions que ha aplicat el compilador:
+
+	- inlining: dins del codi assembly (i també dins del report de les funcions que s'ha vist dins de perf report) es veu que es deixa d'invocar la funció 
+bodybodyinteraction, es a dir, el seu cos es troba directament incorporta dins de la funció integrate. Algunes funcions com pow no s'ha aplicat inlining al tenir més codi. El fet de haver de cridar pow per cada parella (i,j) afegeix cost  (ús de la pila, saltar i retorn).
+
+	- divisió de punt flotant: dins de la funció bodybodyinteraction s'ha de realitzar una divisió per dur a terme el càlcul de la força gravitatoria entre la parella (i,j). 
+Les divisions de punt flotant son costoses.
+	- vectorització parcial: Veiem instruccions amb ps, indicant que el compilador ha pogut aplicar vectorització.
+Tot i axiò, la vecrotrització aplicada són només per operacions dins de una mateixa iteració, pels components x,y i z, aprofitant els tres components que son independts,però no s'arriba a tenir una vecrotització entre iteracions. 
+	- absència de loop vecorization: els obstacles que han causat aixó són els seguents:
+		- crida de la funció powf
+		- condició i!=j dins de integrate
+		- condició if (distSqr < SOFTENING_SQUARED)
+	- conversions de float a double: dins del codi base tenim literals escrits d'una manera que el compilador els interpreta com a doubles en comptes de floats
+	- càlculs durant la fase de compilació: dins de la condició de SOFTENING, una de les branques utilitza un valor constant. El compilador ha detectat
+aquest valor constant, per aixó en una de les branques no veiem la crida de la funció powf.
+
